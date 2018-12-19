@@ -24,7 +24,7 @@ import com.google.common.collect.ImmutableList;
 
 import me.lucko.spark.common.command.Arguments;
 import me.lucko.spark.common.command.Command;
-import me.lucko.spark.common.command.modules.HeapModule;
+import me.lucko.spark.common.command.modules.MemoryModule;
 import me.lucko.spark.common.command.modules.MonitoringModule;
 import me.lucko.spark.common.command.modules.SamplerModule;
 import me.lucko.spark.common.command.tabcomplete.CompletionSupplier;
@@ -58,7 +58,7 @@ public abstract class SparkPlatform<S> {
         ImmutableList.Builder<Command<T>> builder = ImmutableList.builder();
         new SamplerModule<T>().registerCommands(builder::add);
         new MonitoringModule<T>().registerCommands(builder::add);
-        new HeapModule<T>().registerCommands(builder::add);
+        new MemoryModule<T>().registerCommands(builder::add);
         return builder.build();
     }
 
