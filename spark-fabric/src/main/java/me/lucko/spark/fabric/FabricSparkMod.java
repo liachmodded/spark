@@ -20,13 +20,22 @@
 
 package me.lucko.spark.fabric;
 
+import me.lucko.spark.fabric.plugin.FabricClientSparkPlugin;
+import me.lucko.spark.fabric.plugin.FabricServerSparkPlugin;
+import me.lucko.spark.fabric.plugin.FabricSparkPlugin;
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.event.client.ClientTickCallback;
+import net.fabricmc.fabric.api.event.server.ServerStartCallback;
+import net.fabricmc.fabric.api.event.server.ServerTickCallback;
+import net.fabricmc.fabric.api.registry.CommandRegistry;
 import net.fabricmc.loader.api.FabricLoader;
 import net.fabricmc.loader.api.ModContainer;
+import net.minecraft.client.MinecraftClient;
 
 import java.nio.file.Path;
 
 public class FabricSparkMod implements ModInitializer {
+
     private static FabricSparkMod mod;
 
     public static FabricSparkMod getMod() {
@@ -35,6 +44,13 @@ public class FabricSparkMod implements ModInitializer {
 
     private ModContainer container;
     private Path configDirectory;
+    private SparkCommand command;
+
+    // Called via entrypoint
+    public static void initializeClient() {
+        FabricClientSparkPlugin.register(FabricSparkMod.getMod(), MinecraftClient.getInstance());
+        ClientTickCallback.EVENT.register(client -> FabricSparkGameHooks.INSTANCE.tickClientCounters());
+    }
 
     @Override
     public void onInitialize() {
@@ -44,6 +60,12 @@ public class FabricSparkMod implements ModInitializer {
         this.container = loader.getModContainer("spark")
                 .orElseThrow(() -> new IllegalStateException("Unable to get container for spark"));
         this.configDirectory = loader.getConfigDirectory().toPath().resolve("spark");
+
+        this.command = new SparkCommand();
+        CommandRegistry.INSTANCE.register(false, dispatcher -> FabricSparkPlugin.registerCommands(dispatcher, this.command, this.command, "spark"));
+
+        ServerStartCallback.EVENT.register(server -> FabricServerSparkPlugin.register(this, server, this.command));
+        ServerTickCallback.EVENT.register(server -> FabricSparkGameHooks.INSTANCE.tickServerCounters());
     }
 
     public String getVersion() {
